@@ -99,45 +99,7 @@ jobs:
       #         ls -la /app/results
       #       "
       
-      - name: Visualize top frequent subgraphs as PNG
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/app \
-            -e PYTHONUNBUFFERED=1 \
-            decoder-image:latest \
-            bash -c "
-              set -e
-              pip install matplotlib networkx pandas  # usually already in image, but safe
-              python - <<'PY'
-              import pickle
-              import networkx as nx
-              import matplotlib.pyplot as plt
-              from pathlib import Path
-
-              Path('/app/plots').mkdir(exist_ok=True)
-
-              with open('/app/results/patterns.pkl', 'rb') as f:
-                  patterns = pickle.load(f)
-
-              # Sort by support/frequency
-              sorted_pat = sorted(patterns, key=lambda x: x.get('support', x.get('freq', 0)), reverse=True)[:15]
-
-              print(f'Found {len(patterns)} patterns. Visualizing top {len(sorted_pat)}')
-
-              for i, p in enumerate(sorted_pat):
-                  G = p['graph']
-                  sup = p.get('support', p.get('freq', '?'))
-                  plt.figure(figsize=(7,7))
-                  pos = nx.spring_layout(G, seed=42, k=0.9)
-                  nx.draw(G, pos, with_labels=True, node_size=800, node_color='gold',
-                          font_size=12, font_weight='bold', edge_color='gray', width=2)
-                  plt.title(f'Top {i+1} | Nodes: {G.number_of_nodes()} | Edges: {G.number_of_edges()} | Support: {sup:.4f}')
-                  plt.savefig(f'/app/plots/pattern_{i+1:02d}_sup{sup:.4f}.png', dpi=150, bbox_inches='tight')
-                  plt.close()
-
-              print('All visualizations saved to /app/plots/')
-              PY
-            "
+   
             
       - name: Run matcher in Docker container
         run: |
